@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.aws_region
-}
-
 data "aws_instance" "k3s_server" {
   instance_id = var.k3s_server_instance_id
 }
