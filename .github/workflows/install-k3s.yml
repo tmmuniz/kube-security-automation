@@ -13,8 +13,9 @@ on:
           - apply
 
       k3s_version:
-        description: "Optional K3s version. Example: v1.30.6+k3s1"
+        description: "Optional K3s version. Empty = latest stable"
         required: false
+        default: ""
         type: string
 
 permissions:

@@ -1,15 +1,25 @@
-
-- name: Check k3s installed
-  stat:
+---
+- name: Check if K3s server binary exists
+  ansible.builtin.stat:
     path: /usr/local/bin/k3s
-  register: k3s
+  register: k3s_binary
 
-- name: Install server
-  shell: |
-    curl -sfL "{{ k3s_install_script_url }}" | sh -s - server     --token "{{ k3s_token }}"     --tls-san "{{ k3s_tls_san }}"
-  when: not k3s.stat.exists
+- name: Install K3s server
+  ansible.builtin.shell: |
+    set -e
 
-- name: Ensure k3s started
-  systemd:
-    name: k3s
-    state: started
+    if [ -n "{{ k3s_version }}" ]; then
+      export INSTALL_K3S_VERSION="{{ k3s_version }}"
+    fi
+
+    curl -sfL "{{ k3s_install_script_url }}" | sh -s - server \
+      --token "{{ k3s_token }}" \
+      --write-kubeconfig-mode "{{ k3s_write_kubeconfig_mode }}" \
+      --tls-san "{{ k3s_tls_san }}" \
+      --node-name "{{ inventory_hostname }}" \
+      {% if k3s_disable_traefik %} --disable traefik {% endif %} \
+      {% if k3s_disable_servicelb %} --disable servicelb {% endif %}
+  args:
+    executable: /bin/bash
+  when: not k3s_binary.stat.exists
+  no_log: true
