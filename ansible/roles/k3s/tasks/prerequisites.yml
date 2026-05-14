@@ -1,41 +1,36 @@
 ---
-# 1. Definir pacotes específicos para cada sistema operacional usando sintaxe YAML pura
-- name: Set OS specific package list
-  ansible.builtin.set_fact:
-    k3s_prereq_packages: >-
-      {% if ansible_facts['os_family'] == 'Debian' %}
-        [ "curl", "nfs-common", "open-iscsi", "lsb-release" ]
-      {% elif ansible_facts['os_family'] == 'RedHat' %}
-        [ "nfs-utils", "iscsi-initiator-utils", "tar", "gzip" ]
-      {% else %}
-        []
-      {% endif %}
-
-# 2. Instalação para Debian/Ubuntu
+# 1. Instalação para Debian/Ubuntu
 - name: Update cache and install packages (Debian/Ubuntu)
   ansible.builtin.apt:
-    name: "{{ k3s_prereq_packages }}"
+    name:
+      - curl
+      - nfs-common
+      - open-iscsi
+      - lsb-release
     state: present
     update_cache: true
     cache_valid_time: 3600
   become: true
   when: ansible_facts['os_family'] == "Debian"
 
-# 3. Instalação para Amazon Linux / RHEL
+# 2. Instalação para Amazon Linux / RHEL
 - name: Update cache and install packages (Amazon Linux/RHEL)
   ansible.builtin.dnf:
-    name: "{{ k3s_prereq_packages }}"
+    name:
+      - nfs-utils
+      - iscsi-initiator-utils
+      - tar
+      - gzip
     state: present
     update_cache: true
     nobest: true
   become: true
   when: ansible_facts['os_family'] == "RedHat"
 
-# 4. Desabilitar Swap
+# 3. Desabilitar Swap
 - name: Disable swap immediately
   ansible.builtin.command: swapoff -a
   become: true
-  # Ignora erro se o swap já estiver desativado (comum no Amazon Linux Minimal)
   failed_when: false
   changed_when: false
 
@@ -46,7 +41,7 @@
     replace: '# \1'
   become: true
 
-# 5. Módulos do Kernel
+# 4. Módulos do Kernel
 - name: Load br_netfilter module
   community.general.modprobe:
     name: br_netfilter
@@ -68,7 +63,7 @@
       overlay
   become: true
 
-# 6. Parâmetros de Rede (Sysctl)
+# 5. Parâmetros de Rede (Sysctl)
 - name: Configure Kubernetes sysctl parameters
   ansible.builtin.copy:
     dest: /etc/sysctl.d/99-k3s.conf
