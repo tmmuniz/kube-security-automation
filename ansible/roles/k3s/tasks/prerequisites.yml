@@ -19,12 +19,12 @@
     regexp: '^\s*([^#]\S+\s+\S+\s+swap\s+.*)$'
     replace: '# \1'
 
-- name: Load br_netfilter
+- name: Load br_netfilter module
   community.general.modprobe:
     name: br_netfilter
     state: present
 
-- name: Load overlay
+- name: Load overlay module
   community.general.modprobe:
     name: overlay
     state: present
@@ -37,7 +37,7 @@
       br_netfilter
       overlay
 
-- name: Configure sysctl
+- name: Configure Kubernetes sysctl parameters
   ansible.builtin.copy:
     dest: /etc/sysctl.d/99-k3s.conf
     mode: "0644"
