@@ -1,12 +1,12 @@
 ---
-# 1. Definir pacotes específicos para cada sistema operacional
+# 1. Definir pacotes específicos para cada sistema operacional usando sintaxe YAML pura
 - name: Set OS specific package list
   ansible.builtin.set_fact:
     k3s_prereq_packages: >-
       {% if ansible_facts['os_family'] == 'Debian' %}
-        ['curl', 'nfs-common', 'open-iscsi', 'lsb-release', 'apt-transport-https']
+        [ "curl", "nfs-common", "open-iscsi", "lsb-release" ]
       {% elif ansible_facts['os_family'] == 'RedHat' %}
-        ['nfs-utils', 'iscsi-initiator-utils', 'tar', 'gzip']
+        [ "nfs-utils", "iscsi-initiator-utils", "tar", "gzip" ]
       {% else %}
         []
       {% endif %}
@@ -31,10 +31,12 @@
   become: true
   when: ansible_facts['os_family'] == "RedHat"
 
-# 4. Configurações de Swap (Geralmente desabilitado por padrão no Amazon Linux Minimal)
+# 4. Desabilitar Swap
 - name: Disable swap immediately
   ansible.builtin.command: swapoff -a
   become: true
+  # Ignora erro se o swap já estiver desativado (comum no Amazon Linux Minimal)
+  failed_when: false
   changed_when: false
 
 - name: Remove swap from fstab
