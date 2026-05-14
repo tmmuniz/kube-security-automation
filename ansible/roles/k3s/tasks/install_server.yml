@@ -22,4 +22,19 @@
   args:
     executable: /bin/bash
   when: not k3s_binary.stat.exists
-  no_log: true
+  #no_log: true
+
+- name: Ensure K3s server service is enabled and started
+  ansible.builtin.systemd:
+    name: k3s
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for Kubernetes API on server
+  ansible.builtin.command: kubectl get nodes
+  register: k3s_api_check
+  retries: 18
+  delay: 10
+  until: k3s_api_check.rc == 0
+  changed_when: false

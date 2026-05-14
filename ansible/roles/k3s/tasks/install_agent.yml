@@ -4,25 +4,39 @@
     path: /etc/systemd/system/k3s-agent.service
   register: k3s_agent_service
 
+- name: Wait for K3s server API from agent
+  ansible.builtin.wait_for:
+    host: "{{ k3s_server_private_ip }}"
+    port: "{{ k3s_api_port }}"
+    timeout: 180
+
 - name: Install K3s agent
   ansible.builtin.shell: |
     set -e
 
-    # Define a versão do K3s se a variável existir
-    {% if k3s_version is defined and k3s_version %}
-    export INSTALL_K3S_VERSION="{{ k3s_version }}"
-    {% endif %}
+    if [ -n "{{ k3s_version }}" ]; then
+      export INSTALL_K3S_VERSION="{{ k3s_version }}"
+    fi
 
-    # Executa o instalador apontando para o Server
-    curl -sfL "{{ k3s_install_script_url | default('https://get.k3s.io') }}" | sh -s - agent \
-      --server "https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}" \
+    curl -sfL "{{ k3s_install_script_url }}" | sh -s - agent \
+      --server "https://{{ k3s_server_private_ip }}:{{ k3s_api_port }}" \
       --token "{{ k3s_token }}" \
       --node-name "{{ inventory_hostname }}" \
       --node-label "node-role.kubernetes.io/worker=true"
   args:
     executable: /bin/bash
-  # FUNDAMENTAL: O instalador do K3s exige privilégios de root
-  become: true
   when: not k3s_agent_service.stat.exists
-  # Sugestão: Remova o no_log temporariamente se o erro persistir para ver o log do curl
-  no_log: true
+  #no_log: true
+
+- name: Ensure K3s agent service is enabled and started
+  ansible.builtin.systemd:
+    name: k3s-agent
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Check K3s agent service status
+  ansible.builtin.command: systemctl is-active k3s-agent
+  register: k3s_agent_status
+  changed_when: false
+  failed_when: k3s_agent_status.stdout != "active"
