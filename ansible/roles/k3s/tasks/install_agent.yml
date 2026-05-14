@@ -1,39 +1,36 @@
 ---
-# 1. Verificar se o binário ou serviço já existe para evitar re-instalação
+# 1. Verificar o status sem travar o transporte SSM
 - name: Check if K3s agent service exists
   ansible.builtin.stat:
     path: /etc/systemd/system/k3s-agent.service
   register: k3s_agent_service
 
-# 2. Debug/Wait: Garante que o Agent consegue pingar a porta da API do Server
-# Isso evita o erro de "non-zero return code" causado por timeout de rede ou firewall
+# 2. IMPORTANTE para SSM: Delegamos o teste de rede para o Localhost (Runner)
+# Testar conexão de dentro do SSM para outro IP privado pode causar hang no túnel
 - name: Wait for K3s server API to be reachable
   ansible.builtin.wait_for:
     host: "{{ k3s_server_private_ip }}"
-    port: "{{ k3s_api_port | default(6443) }}"
+    port: "{{ k3s_api_port | default(6443) | int }}"
     timeout: 60
-    msg: "Não foi possível conectar ao servidor K3s em {{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}"
+    state: started
   when: not k3s_agent_service.stat.exists
+  delegate_to: localhost
 
-# 3. Instalação do Agent
+# 3. Instalação via Shell (SSM roda como ssm-user, então 'become' é essencial)
 - name: Install K3s agent
   ansible.builtin.shell: |
-    set -e
-
-    # Exporta a versão se definida
+    # Usamos variáveis simples para não confundir o parser do SSM
+    export K3S_URL="https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}"
+    export K3S_TOKEN="{{ k3s_token }}"
+    
     {% if k3s_version is defined and k3s_version %}
     export INSTALL_K3S_VERSION="{{ k3s_version }}"
     {% endif %}
 
-    # Executa o script oficial
-    curl -sfL "{{ k3s_install_script_url | default('https://get.k3s.io') }}" | sh -s - agent \
-      --server "https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}" \
-      --token "{{ k3s_token }}" \
+    curl -sfL {{ k3s_install_script_url | default('https://get.k3s.io') }} | sh -s - agent \
       --node-name "{{ inventory_hostname }}" \
       --node-label "node-role.kubernetes.io/worker=true"
   args:
     executable: /bin/bash
-  # O uso do 'become' é obrigatório no Amazon Linux Minimal para configurar systemd
   become: true
   when: not k3s_agent_service.stat.exists
-  # no_log: true # Recomendo manter comentado até confirmar que o erro sumiu
