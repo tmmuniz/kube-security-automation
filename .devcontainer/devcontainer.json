@@ -1,0 +1,19 @@
+{
+  "name": "Terraform",
+  "features": {
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "latest"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "hashicorp.terraform",
+        "ecmel.vscode-html-css",
+        "redhat.ansible",
+        "redhat.vscode-yaml",
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}
