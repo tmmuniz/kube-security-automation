@@ -1,3 +1,0 @@
-
-- name: Get nodes
-  ansible.builtin.command: kubectl get nodes

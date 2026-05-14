@@ -1,0 +1,15 @@
+
+- name: Check k3s installed
+  stat:
+    path: /usr/local/bin/k3s
+  register: k3s
+
+- name: Install server
+  shell: |
+    curl -sfL "{{ k3s_install_script_url }}" | sh -s - server     --token "{{ k3s_token }}"     --tls-san "{{ k3s_tls_san }}"
+  when: not k3s.stat.exists
+
+- name: Ensure k3s started
+  systemd:
+    name: k3s
+    state: started

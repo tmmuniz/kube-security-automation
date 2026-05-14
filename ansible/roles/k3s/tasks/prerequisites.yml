@@ -1,0 +1,13 @@
+
+- name: Update apt
+  apt:
+    update_cache: yes
+
+- name: Install packages
+  apt:
+    name: "{{ k3s_packages }}"
+    state: present
+
+- name: Disable swap
+  command: swapoff -a
+  changed_when: false
