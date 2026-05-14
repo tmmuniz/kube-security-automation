@@ -1,33 +1,44 @@
----
-- name: Update apt cache
+- name: Update cache and install packages (Debian/Ubuntu)
   ansible.builtin.apt:
     update_cache: true
     cache_valid_time: 3600
-
-- name: Install required packages
-  ansible.builtin.apt:
     name: "{{ k3s_packages }}"
     state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Update cache and install packages (Amazon Linux/RHEL)
+  ansible.builtin.dnf: # AL2023 usa dnf, AL2 aceita dnf ou yum
+    name: "{{ k3s_packages }}"
+    state: present
+    update_cache: true
+  become: true
+  when: ansible_os_family == "RedHat"
 
 - name: Disable swap immediately
   ansible.builtin.command: swapoff -a
+  become: true
   changed_when: false
+  # O Amazon Linux Minimal geralmente já vem sem swap, mas este comando garante.
 
 - name: Remove swap from fstab
   ansible.builtin.replace:
     path: /etc/fstab
     regexp: '^\s*([^#]\S+\s+\S+\s+swap\s+.*)$'
     replace: '# \1'
+  become: true
 
 - name: Load br_netfilter module
   community.general.modprobe:
     name: br_netfilter
     state: present
+  become: true
 
 - name: Load overlay module
   community.general.modprobe:
     name: overlay
     state: present
+  become: true
 
 - name: Persist kernel modules
   ansible.builtin.copy:
@@ -36,6 +47,7 @@
     content: |
       br_netfilter
       overlay
+  become: true
 
 - name: Configure Kubernetes sysctl parameters
   ansible.builtin.copy:
@@ -45,4 +57,5 @@
       net.ipv4.ip_forward = 1
       net.bridge.bridge-nf-call-iptables = 1
       net.bridge.bridge-nf-call-ip6tables = 1
+  become: true
   notify: Reload sysctl
