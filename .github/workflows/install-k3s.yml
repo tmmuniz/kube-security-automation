@@ -1,0 +1,102 @@
+name: Provision and Install K3s
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Terraform action"
+        required: true
+        default: "plan"
+        type: choice
+        options:
+          - plan
+          - apply
+
+      k3s_version:
+        description: "Optional K3s version. Example: v1.30.6+k3s1"
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+  ARN_OIDC_TERRAFORM_ROLE: ${{ vars.ARN_OIDC_TERRAFORM_ROLE }}
+  ARN_OIDC_ANSIBLE_ROLE: ${{ vars.ARN_OIDC_ANSIBLE_ROLE }}
+
+  TERRAFORM_BUCKET_NAME: ${{ vars.TERRAFORM_BUCKET_NAME }}
+  SSM_BUCKET_NAME: ${{ vars.SSM_BUCKET_NAME }}
+
+  ALLOWED_PUBLIC_IP_CIDR: ${{ vars.ALLOWED_PUBLIC_IP_CIDR }}
+
+  K3S_SERVER_INSTANCE_ID: ${{ vars.K3S_SERVER_INSTANCE_ID }}
+  K3S_AGENT_INSTANCE_ID: ${{ vars.K3S_AGENT_INSTANCE_ID }}
+
+  K3S_VERSION: ${{ inputs.k3s_version }}
+
+jobs:
+  terraform-k3s-security-group:
+    name: Terraform K3s Security Group
+    runs-on: ubuntu-latest
+
+    outputs:
+      k3s_server_public_ip: ${{ steps.tf_outputs.outputs.k3s_server_public_ip }}
+      k3s_server_private_ip: ${{ steps.tf_outputs.outputs.k3s_server_private_ip }}
+      k3s_agent_private_ip: ${{ steps.tf_outputs.outputs.k3s_agent_private_ip }}
+      k3s_security_group_id: ${{ steps.tf_outputs.outputs.k3s_security_group_id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials for Terraform
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ARN_OIDC_TERRAFORM_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: terraform/k3s-security-group
+        run: |
+          terraform init \
+            -backend-config="bucket=${TERRAFORM_BUCKET_NAME}" \
+            -backend-config="key=k3s-security-group/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform Validate
+        working-directory: terraform/k3s-security-group
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform/k3s-security-group
+        run: |
+          terraform plan \
+            -var="aws_region=${AWS_REGION}" \
+            -var="k3s_server_instance_id=${K3S_SERVER_INSTANCE_ID}" \
+            -var="k3s_agent_instance_id=${K3S_AGENT_INSTANCE_ID}" \
+            -var="allowed_public_ip_cidr=${ALLOWED_PUBLIC_IP_CIDR}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        if: ${{ inputs.action == 'apply' }}
+        working-directory: terraform/k3s-security-group
+        run: terraform apply -auto-approve tfplan
+
+      - name: Export Terraform outputs
+        if: ${{ inputs.action == 'apply' }}
+        id: tf_outputs
+        working-directory: terraform/k3s-security-group
+        run: |
+          echo "k3s_server_public_ip=$(terraform output -raw k3s_server_public_ip)" >> "$GITHUB_OUTPUT"
+          echo "k3s_server_private_ip=$(terraform output -raw k3s_server_private_ip)" >> "$GITHUB_OUTPUT"
+          echo "k3s_agent_private_ip=$(terraform output -raw k3s_agent_private_ip)" >> "$GITHUB_OUTPUT"
+          echo "k3s_security_group_id=$(terraform output -raw k3s_security_group_id)" >> "$GITHUB_OUTPUT"
