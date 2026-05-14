@@ -44,6 +44,22 @@ resource "aws_vpc_security_group_ingress_rule" "flannel" {
   to_port     = 8472
 }
 
+resource "aws_vpc_security_group_ingress_rule" "k3s_supervisor" {
+  security_group_id            = aws_security_group.this.id
+  referenced_security_group_id = aws_security_group.this.id
+  ip_protocol                  = "tcp"
+  from_port                    = 9345
+  to_port                      = 9345
+}
+
+resource "aws_vpc_security_group_ingress_rule" "node_ports" {
+  security_group_id            = aws_security_group.this.id
+  referenced_security_group_id = aws_security_group.this.id
+  ip_protocol                  = "tcp"
+  from_port                    = 10248
+  to_port                      = 10260
+}
+
 resource "aws_vpc_security_group_egress_rule" "all" {
   security_group_id = aws_security_group.this.id
   ip_protocol = "-1"
