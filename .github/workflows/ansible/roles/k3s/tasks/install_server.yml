@@ -1,0 +1,4 @@
+
+- name: Install K3s server
+  ansible.builtin.shell: |
+    curl -sfL "{{ k3s_install_script_url }}" | sh -s - server     --token "{{ k3s_token }}"     --tls-san "{{ k3s_tls_san }}"

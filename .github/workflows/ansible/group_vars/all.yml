@@ -1,0 +1,31 @@
+
+k3s_version: "{{ lookup('env', 'K3S_VERSION') | default('', true) }}"
+k3s_token: "{{ lookup('env', 'K3S_TOKEN') }}"
+
+k3s_api_port: 6443
+k3s_write_kubeconfig_mode: "644"
+
+k3s_server_public_ip: "{{ lookup('env', 'K3S_SERVER_PUBLIC_IP') }}"
+k3s_server_private_ip: "{{ lookup('env', 'K3S_SERVER_PRIVATE_IP') }}"
+k3s_tls_san: "{{ lookup('env', 'K3S_SERVER_PUBLIC_IP') }}"
+
+k3s_disable_traefik: true
+k3s_disable_servicelb: false
+
+k3s_install_script_url: "https://get.k3s.io"
+
+k3s_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - apt-transport-https
+  - python3
+  - python3-pip
+  - open-iscsi
+  - nfs-common
