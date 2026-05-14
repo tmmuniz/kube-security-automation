@@ -1,36 +1,28 @@
 ---
-# 1. Verificar o status sem travar o transporte SSM
 - name: Check if K3s agent service exists
   ansible.builtin.stat:
     path: /etc/systemd/system/k3s-agent.service
   register: k3s_agent_service
 
-# 2. IMPORTANTE para SSM: Delegamos o teste de rede para o Localhost (Runner)
-# Testar conexão de dentro do SSM para outro IP privado pode causar hang no túnel
-- name: Wait for K3s server API to be reachable
-  ansible.builtin.wait_for:
-    host: "{{ k3s_server_private_ip }}"
-    port: "{{ k3s_api_port | default(6443) | int }}"
-    timeout: 60
-    state: started
-  when: not k3s_agent_service.stat.exists
-  delegate_to: localhost
-
-# 3. Instalação via Shell (SSM roda como ssm-user, então 'become' é essencial)
 - name: Install K3s agent
   ansible.builtin.shell: |
-    # Usamos variáveis simples para não confundir o parser do SSM
-    export K3S_URL="https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}"
-    export K3S_TOKEN="{{ k3s_token }}"
-    
+    set -e
+
+    # Define a versão do K3s se a variável existir
     {% if k3s_version is defined and k3s_version %}
     export INSTALL_K3S_VERSION="{{ k3s_version }}"
     {% endif %}
 
-    curl -sfL {{ k3s_install_script_url | default('https://get.k3s.io') }} | sh -s - agent \
+    # Executa o instalador apontando para o Server
+    curl -sfL "{{ k3s_install_script_url | default('https://get.k3s.io') }}" | sh -s - agent \
+      --server "https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}" \
+      --token "{{ k3s_token }}" \
       --node-name "{{ inventory_hostname }}" \
       --node-label "node-role.kubernetes.io/worker=true"
   args:
     executable: /bin/bash
+  # FUNDAMENTAL: O instalador do K3s exige privilégios de root
   become: true
   when: not k3s_agent_service.stat.exists
+  # Sugestão: Remova o no_log temporariamente se o erro persistir para ver o log do curl
+  no_log: true
