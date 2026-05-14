@@ -15,7 +15,7 @@ k3s_disable_servicelb: false
 k3s_install_script_url: "https://get.k3s.io"
 
 k3s_packages:
-  - curl
+#  - curl
   - wget
   - git
   - vim
