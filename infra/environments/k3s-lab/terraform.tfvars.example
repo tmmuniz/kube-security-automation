@@ -1,0 +1,4 @@
+aws_region = "us-east-1"
+k3s_server_instance_id = "i-xxxxxxxx"
+k3s_agent_instance_id  = "i-yyyyyyyy"
+allowed_public_ip_cidr = "1.2.3.4/32"

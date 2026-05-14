@@ -64,7 +64,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: terraform/k3s-security-group
+        working-directory: infra/environments/k3s-lab
         run: |
           terraform init \
             -backend-config="bucket=${TERRAFORM_BUCKET_NAME}" \
