@@ -41,7 +41,6 @@ jobs:
   terraform-k3s-security-group:
     name: Terraform K3s Security Group
     runs-on: ubuntu-latest
-    if: false
 
     outputs:
       k3s_server_public_ip: ${{ steps.tf_outputs.outputs.k3s_server_public_ip }}
