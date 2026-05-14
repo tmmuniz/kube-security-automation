@@ -100,7 +100,7 @@ jobs:
           echo "k3s_server_private_ip=$(terraform output -raw k3s_server_private_ip)" >> "$GITHUB_OUTPUT"
           echo "k3s_agent_private_ip=$(terraform output -raw k3s_agent_private_ip)" >> "$GITHUB_OUTPUT"
           echo "k3s_security_group_id=$(terraform output -raw k3s_security_group_id)" >> "$GITHUB_OUTPUT"
-          
+
   install-k3s:
     name: Install K3s with Ansible over SSM
     runs-on: ubuntu-latest
@@ -113,6 +113,8 @@ jobs:
       K3S_AGENT_PRIVATE_IP: ${{ needs.terraform-k3s-security-group.outputs.k3s_agent_private_ip }}
       K3S_TLS_SAN: ${{ needs.terraform-k3s-security-group.outputs.k3s_server_public_ip }}
 
+      K3S_TOKEN: ${{ secrets.K3S_TOKEN }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -122,10 +124,6 @@ jobs:
         with:
           role-to-assume: ${{ env.ARN_OIDC_ANSIBLE_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Generate K3s token
-        run: |
-          echo "K3S_TOKEN=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
 
       - name: Install Ansible dependencies
         run: |
