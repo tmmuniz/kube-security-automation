@@ -4,39 +4,60 @@
     path: /etc/systemd/system/k3s-agent.service
   register: k3s_agent_service
 
-- name: Wait for K3s server API from agent
+- name: Wait for K3s server API to be reachable
   ansible.builtin.wait_for:
     host: "{{ k3s_server_private_ip }}"
-    port: "{{ k3s_api_port }}"
-    timeout: 180
+    port: "{{ k3s_api_port | default(6443) | int }}"
+    timeout: 60
+  when: not k3s_agent_service.stat.exists
+  delegate_to: localhost
 
 - name: Install K3s agent
   ansible.builtin.shell: |
-    set -e
-
-    if [ -n "{{ k3s_version }}" ]; then
-      export INSTALL_K3S_VERSION="{{ k3s_version }}"
-    fi
-
-    curl -sfL "{{ k3s_install_script_url }}" | sh -s - agent \
-      --server "https://{{ k3s_server_private_ip }}:{{ k3s_api_port }}" \
+    # Garante que o diretório de binários existe e está no PATH
+    mkdir -p /usr/local/bin
+    
+    # Executa a instalação passando as variáveis como ambiente para o SH
+    curl -sfL https://get.k3s.io | INSTALL_K3S_SKIP_ENABLE=true sh -s - agent \
+      --server "https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}" \
       --token "{{ k3s_token }}" \
       --node-name "{{ inventory_hostname }}" \
       --node-label "node-role.kubernetes.io/worker=true"
   args:
     executable: /bin/bash
+  become: true
   when: not k3s_agent_service.stat.exists
-  #no_log: true
 
-- name: Ensure K3s agent service is enabled and started
+- name: Ensure K3s binary has execution permissions
+  ansible.builtin.file:
+    path: /usr/local/bin/k3s
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Start and enable K3s agent service
   ansible.builtin.systemd:
     name: k3s-agent
-    enabled: true
     state: started
+    enabled: true
     daemon_reload: true
+  become: true
+  register: agent_start
+  ignore_errors: true
 
-- name: Check K3s agent service status
-  ansible.builtin.command: systemctl is-active k3s-agent
-  register: k3s_agent_status
-  changed_when: false
-  failed_when: k3s_agent_status.stdout != "active"
+- name: Debug K3s failure if service not active
+  ansible.builtin.command: journalctl -u k3s-agent -n 20 --no-pager
+  become: true
+  when: agent_start.failed
+  register: k3s_logs
+
+- name: Show K3s logs on failure
+  ansible.builtin.debug:
+    var: k3s_logs.stdout_lines
+  when: agent_start.failed
+
+- name: Fail if K3s agent is not active
+  ansible.builtin.assert:
+    that: not agent_start.failed
+    msg: "O serviço k3s-agent falhou ao iniciar. Verifique os logs acima."
