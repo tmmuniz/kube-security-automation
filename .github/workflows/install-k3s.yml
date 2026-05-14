@@ -73,11 +73,11 @@ jobs:
             -backend-config="encrypt=true"
 
       - name: Terraform Validate
-        working-directory: terraform/k3s-security-group
+        working-directory: infra/environments/k3s-lab
         run: terraform validate
 
       - name: Terraform Plan
-        working-directory: terraform/k3s-security-group
+        working-directory: infra/environments/k3s-lab
         run: |
           terraform plan \
             -var="aws_region=${AWS_REGION}" \
@@ -88,13 +88,13 @@ jobs:
 
       - name: Terraform Apply
         if: ${{ inputs.action == 'apply' }}
-        working-directory: terraform/k3s-security-group
+        working-directory: infra/environments/k3s-lab
         run: terraform apply -auto-approve tfplan
 
       - name: Export Terraform outputs
         if: ${{ inputs.action == 'apply' }}
         id: tf_outputs
-        working-directory: terraform/k3s-security-group
+        working-directory: infra/environments/k3s-lab
         run: |
           echo "k3s_server_public_ip=$(terraform output -raw k3s_server_public_ip)" >> "$GITHUB_OUTPUT"
           echo "k3s_server_private_ip=$(terraform output -raw k3s_server_private_ip)" >> "$GITHUB_OUTPUT"
