@@ -1,0 +1,48 @@
+---
+- name: Create report directory
+  ansible.builtin.file:
+    path: /tmp/trivy-reports
+    state: directory
+    mode: "0755"
+
+- name: Get VulnerabilityReports
+  ansible.builtin.command: kubectl get vulnerabilityreports -A -o wide
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: vulnerability_reports_result
+  changed_when: false
+  failed_when: false
+
+- name: Get ConfigAuditReports
+  ansible.builtin.command: kubectl get configauditreports -A -o wide
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: configaudit_reports_result
+  changed_when: false
+  failed_when: false
+
+- name: Get RBAC Assessment Reports
+  ansible.builtin.command: kubectl get rbacassessmentreports -A -o wide
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: rbac_reports_result
+  changed_when: false
+  failed_when: false
+
+- name: Generate Trivy HTML report from template
+  ansible.builtin.template:
+    src: ../../templates/trivy-report.html.j2
+    dest: /tmp/trivy-reports/trivy-operator-report.html
+    mode: "0644"
+  vars:
+    #github_run_id: "{{ lookup('env', 'GITHUB_RUN_ID') | default('local-run', true) }}"
+    vulnerability_reports: "{{ vulnerability_reports_result.stdout }}"
+    configaudit_reports: "{{ configaudit_reports_result.stdout }}"
+    rbac_reports: "{{ rbac_reports_result.stdout }}"
+
+- name: Upload Trivy HTML report to S3
+  ansible.builtin.command: >
+    aws s3 cp /tmp/trivy-reports/trivy-operator-report.html
+    s3://{{ lookup('env', 'TRIVY_REPORTS_BUCKET_NAME') }}/{{ lookup('env', 'TRIVY_REPORTS_S3_PREFIX') | default('trivy-reports', true) }}/{{ lookup('env', 'GITHUB_RUN_ID') | default('local-run', true) }}/trivy-operator-report.html
+    --content-type text/html
+  changed_when: true

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Trivy Operator Security Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7; color: #222; }
+    h1 { color: #111; }
+    h2 { margin-top: 32px; color: #333; }
+    .meta { color: #555; margin-bottom: 24px; }
+    .card { background: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; }
+    pre { background: #111; color: #eee; padding: 16px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Trivy Operator Security Report</h1>
+
+  <div class="card">
+    <h2>Vulnerability Reports</h2>
+    <pre>{{ vulnerability_reports }}</pre>
+  </div>
+
+  <div class="card">
+    <h2>Config Audit Reports</h2>
+    <pre>{{ configaudit_reports }}</pre>
+  </div>
+
+  <div class="card">
+    <h2>RBAC Assessment Reports</h2>
+    <pre>{{ rbac_reports }}</pre>
+  </div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+---
+- name: Export Trivy reports
+  hosts: k3s_server
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Export Trivy reports to HTML and upload to S3
+      ansible.builtin.import_role:
+        name: trivy_reports
