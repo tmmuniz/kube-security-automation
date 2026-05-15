@@ -126,10 +126,48 @@ jobs:
           role-to-assume: ${{ env.ARN_OIDC_ANSIBLE_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install Ansible dependencies
+
+
+      - name: Validate SSM command execution (server)
         run: |
-          python3 -m pip install --upgrade pip
-          pip install ansible boto3 botocore
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "${K3S_SERVER_INSTANCE_ID}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "SSM test server" \
+            --parameters commands="echo SSM_OK_SERVER" \
+            --query "Command.CommandId" \
+            --output text)
+      
+          sleep 5
+      
+          aws ssm list-command-invocations \
+            --command-id "$CMD_ID" \
+            --details \
+            --query "CommandInvocations[*].CommandPlugins[*].Output" \
+            --output text
+
+      - name: Validate SSM command execution (agent)
+        run: |
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "${K3S_AGENT_INSTANCE_ID}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "SSM test agent" \
+            --parameters commands="echo SSM_OK_AGENT" \
+            --query "Command.CommandId" \
+            --output text)
+      
+          sleep 5
+      
+          aws ssm list-command-invocations \
+            --command-id "$CMD_ID" \
+            --details \
+            --query "CommandInvocations[*].CommandPlugins[*].Output" \
+            --output text
+      
+            - name: Install Ansible dependencies
+              run: |
+                python3 -m pip install --upgrade pip
+                pip install ansible boto3 botocore
 
       - name: Install Ansible collections
         working-directory: ansible
