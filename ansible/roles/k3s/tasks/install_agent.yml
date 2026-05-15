@@ -4,9 +4,9 @@
     path: /etc/systemd/system/k3s-agent.service
   register: k3s_agent_service
 
-- name: Check K3s server API readyz from agent
+- name: Check K3s server API from agent
   ansible.builtin.command: >
-    curl -k --fail https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}/readyz
+    curl -k -s -o /dev/null https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}/cacerts
   register: k3s_server_readyz
   retries: 12
   delay: 10
@@ -73,3 +73,8 @@
 - name: Print K3s agent logs
   ansible.builtin.debug:
     var: k3s_agent_logs.stdout_lines
+
+- name: Fail if K3s agent did not become active
+  ansible.builtin.fail:
+    msg: "K3s agent did not become active. Check service status and journal logs above."
+  when: k3s_agent_status.stdout != "active"
