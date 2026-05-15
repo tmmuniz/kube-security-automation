@@ -40,9 +40,20 @@
     configaudit_reports: "{{ configaudit_reports_result.stdout }}"
     rbac_reports: "{{ rbac_reports_result.stdout }}"
 
-- name: Upload Trivy HTML report to S3
-  ansible.builtin.command: >
-    aws s3 cp /tmp/trivy-reports/trivy-operator-report.html
-    s3://{{ lookup('env', 'TRIVY_REPORTS_BUCKET_NAME') }}/{{ lookup('env', 'TRIVY_REPORTS_S3_PREFIX') | default('trivy-reports', true) }}/{{ lookup('env', 'GITHUB_RUN_ID') | default('local-run', true) }}/trivy-operator-report.html
-    --content-type text/html
-  changed_when: true
+- name: Fetch VulnerabilityReports to runner
+  ansible.builtin.fetch:
+    src: /tmp/trivy-reports/vulnerabilityreports.txt
+    dest: ../trivy-output/vulnerabilityreports.txt
+    flat: true
+
+- name: Fetch ConfigAuditReports to runner
+  ansible.builtin.fetch:
+    src: /tmp/trivy-reports/configauditreports.txt
+    dest: ../trivy-output/configauditreports.txt
+    flat: true
+
+- name: Fetch RBAC Reports to runner
+  ansible.builtin.fetch:
+    src: /tmp/trivy-reports/rbacreports.txt
+    dest: ../trivy-output/rbacreports.txt
+    flat: true

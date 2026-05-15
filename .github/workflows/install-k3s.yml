@@ -219,10 +219,25 @@ jobs:
         working-directory: ansible
         run: ansible-playbook playbooks/install-trivy-operator.yml
 
-      - name: Export Trivy reports to S3
+      - name: Export Trivy reports
         working-directory: ansible
-        env:
-          TRIVY_REPORTS_BUCKET_NAME: ${{ vars.SSM_BUCKET_NAME }}
-          TRIVY_REPORTS_S3_PREFIX: trivy-reports
-          #GITHUB_RUN_ID: ${{ github.run_id }}
         run: ansible-playbook playbooks/export-trivy-reports.yml
+
+      - name: Upload Trivy reports to S3
+        env:
+          ADM_BUCKET_NAME: ${{ vars.ADM_BUCKET_NAME }}
+          TRIVY_REPORTS_S3_PREFIX: trivy-reports
+        run: |
+          set -e
+
+          aws s3 cp trivy-output/vulnerabilityreports.txt \
+            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/vulnerabilityreports.txt" \
+            --content-type text/plain
+
+          aws s3 cp trivy-output/configauditreports.txt \
+            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/configauditreports.txt" \
+            --content-type text/plain
+
+          aws s3 cp trivy-output/rbacreports.txt \
+            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/rbacreports.txt" \
+            --content-type text/plain

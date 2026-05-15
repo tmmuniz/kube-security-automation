@@ -27,21 +27,6 @@ resource "aws_iam_role_policy" "github_ansible_trivy_reports_s3" {
           "s3:GetObject"
         ]
         Resource = "arn:aws:s3:::${var.adm_bucket_name}/trivy-reports/*"
-      },
-      {
-        Sid    = "AllowListTrivyReportsPrefix"
-        Effect = "Allow"
-        Action = [
-          "s3:ListBucket"
-        ]
-        Resource = "arn:aws:s3:::${var.adm_bucket_name}"
-        Condition = {
-          StringLike = {
-            "s3:prefix" = [
-              "trivy-reports/*"
-            ]
-          }
-        }
       }
     ]
   })
