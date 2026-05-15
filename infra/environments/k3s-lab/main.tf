@@ -42,6 +42,8 @@ module "k3s_security_group" {
 
   allowed_public_ip_cidr = var.allowed_public_ip_cidr
 
+  
+
   tags = {
     Environment = "lab"
     ManagedBy   = "Terraform"

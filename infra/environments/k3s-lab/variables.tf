@@ -18,3 +18,13 @@ variable "k3s_agent_instance_id" {
 variable "allowed_public_ip_cidr" {
   type = string
 }
+
+variable "arn_oidc_ansible_role" {
+  description = "GitHub Actions Ansible OIDC role ARN"
+  type        = string
+}
+
+variable "adm_bucket_name" {
+  description = "Existing private administrative bucket name"
+  type        = string
+}

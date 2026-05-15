@@ -21,3 +21,7 @@ output "k3s_server_primary_eni_id" {
 output "k3s_agent_primary_eni_id" {
   value = data.aws_network_interface.agent_primary.id
 }
+
+output "trivy_reports_s3_prefix" {
+  value = "s3://${var.adm_bucket_name}/trivy-reports/"
+}
