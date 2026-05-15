@@ -27,8 +27,8 @@
     curl -sfL "{{ k3s_install_script_url }}" | sh -s - agent \
       --server "https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}" \
       --token "{{ k3s_token }}" \
-      --node-name "{{ inventory_hostname }}" \
-      --node-label "node-role.kubernetes.io/worker=true"
+      --node-name "{{ inventory_hostname }}"
+
   args:
     executable: /bin/bash
   when: not k3s_agent_service.stat.exists

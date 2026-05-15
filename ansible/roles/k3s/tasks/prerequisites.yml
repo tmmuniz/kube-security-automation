@@ -79,3 +79,9 @@
   ansible.builtin.command: sysctl --system
   become: true
   when: sysctl_config.changed
+
+- name: Install iptables (Amazon Linux)
+  ansible.builtin.package:
+    name: iptables
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
