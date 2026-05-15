@@ -1,0 +1,8 @@
+---
+- name: Install Trivy Operator
+  hosts: k3s_server
+  become: true
+  gather_facts: true
+
+  roles:
+    - trivy_operator

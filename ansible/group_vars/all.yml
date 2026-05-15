@@ -12,6 +12,8 @@ k3s_tls_san: "{{ lookup('env', 'K3S_SERVER_PUBLIC_IP') }}"
 k3s_disable_traefik: true
 k3s_disable_servicelb: false
 
+trivy_operator_chart_version: "0.32.1"
+
 k3s_install_script_url: "https://get.k3s.io"
 
 k3s_packages:
