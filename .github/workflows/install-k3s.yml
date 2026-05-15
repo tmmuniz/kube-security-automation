@@ -218,3 +218,11 @@ jobs:
       - name: Install Trivy Operator
         working-directory: ansible
         run: ansible-playbook playbooks/install-trivy-operator.yml
+
+      - name: Export Trivy reports to S3
+        working-directory: ansible
+        env:
+          TRIVY_REPORTS_BUCKET_NAME: ${{ vars.SSM_BUCKET_NAME }}
+          TRIVY_REPORTS_S3_PREFIX: trivy-reports
+          #GITHUB_RUN_ID: ${{ github.run_id }}
+        run: ansible-playbook playbooks/export-trivy-reports.yml
