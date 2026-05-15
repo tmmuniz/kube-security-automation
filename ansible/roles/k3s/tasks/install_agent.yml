@@ -4,13 +4,15 @@
     path: /etc/systemd/system/k3s-agent.service
   register: k3s_agent_service
 
-- name: Wait for K3s server API to be reachable
-  ansible.builtin.wait_for:
-    host: "{{ k3s_server_private_ip }}"
-    port: "{{ k3s_api_port | default(6443) | int }}"
-    timeout: 60
+- name: Check K3s server API readyz from agent
+  ansible.builtin.command: >
+    curl -k https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}/readyz
+  register: k3s_server_readyz
+  retries: 12
+  delay: 10
+  until: k3s_server_readyz.rc == 0 and "ok" in k3s_server_readyz.stdout
+  changed_when: false
   when: not k3s_agent_service.stat.exists
-  delegate_to: localhost
 
 - name: Install K3s agent
   ansible.builtin.shell: |
