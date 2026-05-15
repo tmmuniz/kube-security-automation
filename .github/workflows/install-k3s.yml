@@ -240,7 +240,7 @@ jobs:
 
       - name: Upload Trivy reports to S3
         env:
-          ADM_BUCKET_NAME: ${{ vars.ADM_BUCKET_NAME }}
+          ADM_BUCKET_NAME: ${{ vars.SSM_BUCKET_NAME }}
           TRIVY_REPORTS_S3_PREFIX: trivy-reports
         run: |
           set -e
