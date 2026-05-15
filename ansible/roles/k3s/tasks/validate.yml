@@ -1,23 +1,47 @@
 ---
-- name: Wait for two K3s nodes
-  ansible.builtin.shell: |
-    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-    /usr/local/bin/kubectl get nodes --no-headers | wc -l
-  register: nodes
-  retries: 20
-  delay: 15
-  until: nodes.stdout | int >= 2
-  become: true # Necessário para ler o k3s.yaml
-  changed_when: false
-
-- name: Show nodes
+- name: Get current K3s nodes
   ansible.builtin.shell: |
     export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
     /usr/local/bin/kubectl get nodes -o wide
-  register: out
+  register: current_nodes
   become: true
   changed_when: false
+  failed_when: false
 
-- name: Print nodes
+- name: Print current nodes
   ansible.builtin.debug:
-    var: out.stdout_lines
+    var: current_nodes.stdout_lines
+
+- name: Get current K3s pods
+  ansible.builtin.shell: |
+    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    /usr/local/bin/kubectl get pods -A -o wide
+  register: current_pods
+  become: true
+  changed_when: false
+  failed_when: false
+
+- name: Print current pods
+  ansible.builtin.debug:
+    var: current_pods.stdout_lines
+
+- name: Wait for two K3s nodes
+  ansible.builtin.shell: |
+    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    /usr/local/bin/kubectl get nodes --no-headers
+  register: node_list
+  retries: 12
+  delay: 10
+  until: node_list.stdout_lines | length >= 2
+  become: true
+  changed_when: false
+  failed_when: false
+
+- name: Fail if K3s cluster did not reach two nodes
+  ansible.builtin.fail:
+    msg: |
+      K3s cluster did not reach 2 nodes.
+
+      Current nodes:
+      {{ node_list.stdout }}
+  when: node_list.stdout_lines | length < 2
