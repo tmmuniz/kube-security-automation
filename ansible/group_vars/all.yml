@@ -9,6 +9,11 @@ k3s_server_public_ip: "{{ lookup('env', 'K3S_SERVER_PUBLIC_IP') }}"
 k3s_server_private_ip: "{{ lookup('env', 'K3S_SERVER_PRIVATE_IP') }}"
 k3s_tls_san: "{{ lookup('env', 'K3S_SERVER_PUBLIC_IP') }}"
 
+trivy_reports_bucket_name: "{{ lookup('env', 'TRIVY_REPORTS_BUCKET_NAME') }}"
+trivy_reports_s3_prefix: "{{ lookup('env', 'TRIVY_REPORTS_S3_PREFIX') | default('trivy-reports', true) }}"
+#github_run_id: "{{ lookup('env', 'GITHUB_RUN_ID') | default('local-run', true) }}"
+
+
 k3s_disable_traefik: true
 k3s_disable_servicelb: false
 
