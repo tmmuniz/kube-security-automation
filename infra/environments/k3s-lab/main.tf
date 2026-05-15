@@ -42,7 +42,9 @@ module "k3s_security_group" {
 
   allowed_public_ip_cidr = var.allowed_public_ip_cidr
 
-  
+  arn_oidc_ansible_role = var.arn_oidc_ansible_role
+
+  adm_bucket_name = var.adm_bucket_name
 
   tags = {
     Environment = "lab"
