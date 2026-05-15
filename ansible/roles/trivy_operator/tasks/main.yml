@@ -61,16 +61,42 @@
   ansible.builtin.debug:
     var: trivy_pods.stdout_lines
 
-- name: Show Trivy reports
-  ansible.builtin.shell: |
-    kubectl get vulnerabilityreports -A || true
-    kubectl get configauditreports -A || true
-    kubectl get rbacassessmentreports -A || true
+- name: Wait before reading Trivy reports
+  ansible.builtin.pause:
+    seconds: 60
+
+- name: Show VulnerabilityReports
+  ansible.builtin.command: kubectl get vulnerabilityreports -A
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-  register: trivy_reports
+  register: vulnerability_reports
   changed_when: false
+  failed_when: false
 
-- name: Print Trivy reports
+- name: Print VulnerabilityReports
   ansible.builtin.debug:
-    var: trivy_reports.stdout_lines
+    var: vulnerability_reports.stdout_lines
+
+- name: Show ConfigAuditReports
+  ansible.builtin.command: kubectl get configauditreports -A
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: configaudit_reports
+  changed_when: false
+  failed_when: false
+
+- name: Print ConfigAuditReports
+  ansible.builtin.debug:
+    var: configaudit_reports.stdout_lines
+
+- name: Show RbacAssessmentReports
+  ansible.builtin.command: kubectl get rbacassessmentreports -A
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  register: rbac_reports
+  changed_when: false
+  failed_when: false
+
+- name: Print RbacAssessmentReports
+  ansible.builtin.debug:
+    var: rbac_reports.stdout_lines
