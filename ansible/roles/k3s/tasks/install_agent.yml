@@ -6,11 +6,11 @@
 
 - name: Check K3s server API readyz from agent
   ansible.builtin.command: >
-    curl -k https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}/readyz
+    curl -k --fail https://{{ k3s_server_private_ip }}:{{ k3s_api_port | default(6443) }}/readyz
   register: k3s_server_readyz
   retries: 12
   delay: 10
-  until: k3s_server_readyz.rc == 0 and "ok" in k3s_server_readyz.stdout
+  until: k3s_server_readyz.rc == 0
   changed_when: false
   when: not k3s_agent_service.stat.exists
 
