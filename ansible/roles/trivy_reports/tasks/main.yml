@@ -6,7 +6,7 @@
     mode: "0755"
 
 - name: Get VulnerabilityReports
-  ansible.builtin.command: kubectl get vulnerabilityreports -A -o wide
+  ansible.builtin.command: kubectl get vulnerabilityreports -A -o json > /tmp/trivy-reports/vulnerabilityreports.txt
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   register: vulnerability_reports_result
@@ -14,7 +14,7 @@
   failed_when: false
 
 - name: Get ConfigAuditReports
-  ansible.builtin.command: kubectl get configauditreports -A -o wide
+  ansible.builtin.command: kubectl get configauditreports -A -o json > /tmp/trivy-reports/configauditreports.txt
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   register: configaudit_reports_result
@@ -22,23 +22,12 @@
   failed_when: false
 
 - name: Get RBAC Assessment Reports
-  ansible.builtin.command: kubectl get rbacassessmentreports -A -o wide
+  ansible.builtin.command: kubectl get rbacassessmentreports -A -o json > /tmp/trivy-reports/rbacreports.txt
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   register: rbac_reports_result
   changed_when: false
   failed_when: false
-
-- name: Generate Trivy HTML report from template
-  ansible.builtin.template:
-    src: ../../templates/trivy-report.html.j2
-    dest: /tmp/trivy-reports/trivy-operator-report.html
-    mode: "0644"
-  vars:
-    #github_run_id: "{{ lookup('env', 'GITHUB_RUN_ID') | default('local-run', true) }}"
-    vulnerability_reports: "{{ vulnerability_reports_result.stdout }}"
-    configaudit_reports: "{{ configaudit_reports_result.stdout }}"
-    rbac_reports: "{{ rbac_reports_result.stdout }}"
 
 - name: Fetch VulnerabilityReports to runner
   ansible.builtin.fetch:

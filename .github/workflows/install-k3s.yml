@@ -221,6 +221,9 @@ jobs:
         working-directory: ansible
         run: ansible-playbook playbooks/install-trivy-operator.yml
 
+      - name: Create local directory for Trivy reports
+        run: mkdir -p trivy-output
+
       - name: Export Trivy reports
         working-directory: ansible
         run: ansible-playbook playbooks/export-trivy-reports.yml
