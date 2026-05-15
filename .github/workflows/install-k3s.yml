@@ -235,14 +235,14 @@ jobs:
         run: |
           set -e
 
-          aws s3 cp trivy-output/vulnerabilityreports.txt \
-            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/vulnerabilityreports.txt" \
+          aws s3 cp trivy-output/vulnerabilityreports.yaml \
+            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/vulnerabilityreports.yaml" \
             --content-type text/plain
 
-          aws s3 cp trivy-output/configauditreports.txt \
-            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/configauditreports.txt" \
+          aws s3 cp trivy-output/configauditreports.yaml \
+            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/configauditreports.yaml" \
             --content-type text/plain
 
-          aws s3 cp trivy-output/rbacreports.txt \
-            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/rbacreports.txt" \
+          aws s3 cp trivy-output/rbacreports.yaml \
+            "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/rbacreports.yaml" \
             --content-type text/plain
