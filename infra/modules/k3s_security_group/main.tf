@@ -12,6 +12,12 @@ resource "aws_security_group" "this" {
   )
 }
 
+resource "aws_vpc_security_group_ingress_rule" "internal_unrestricted" {
+  security_group_id            = aws_security_group.this.id
+  referenced_security_group_id = aws_security_group.this.id
+  ip_protocol                  = "-1" # Libera TCP, UDP e ICMP interno
+}
+
 resource "aws_vpc_security_group_ingress_rule" "api_external" {
   security_group_id = aws_security_group.this.id
   ip_protocol = "tcp"
