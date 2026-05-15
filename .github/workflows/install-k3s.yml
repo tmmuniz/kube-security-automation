@@ -85,6 +85,8 @@ jobs:
             -var="k3s_server_instance_id=${K3S_SERVER_INSTANCE_ID}" \
             -var="k3s_agent_instance_id=${K3S_AGENT_INSTANCE_ID}" \
             -var="allowed_public_ip_cidr=${ALLOWED_PUBLIC_IP_CIDR}" \
+            -var="arn_oidc_ansible_role=${ARN_OIDC_ANSIBLE_ROLE}" \
+            -var="adm_bucket_name=${SSM_BUCKET_NAME}" \
             -out=tfplan
 
       - name: Terraform Apply
