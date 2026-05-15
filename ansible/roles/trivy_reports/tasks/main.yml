@@ -42,26 +42,20 @@
   failed_when: false
 
 
-- name: Save RBAC Assessment Reports to remote file
-  ansible.builtin.copy:
-    dest: /tmp/trivy-reports/rbacreports.yaml
-    content: "{{ rbac_reports_result.stdout | default('') }}"
-    mode: "0644"
-
 - name: Fetch VulnerabilityReports to runner
   ansible.builtin.fetch:
     src: /tmp/trivy-reports/vulnerabilityreports.yaml
-    dest: ../trivy-output/vulnerabilityreports.yaml
+    dest: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/trivy-output/vulnerabilityreports.yaml"
     flat: true
 
 - name: Fetch ConfigAuditReports to runner
   ansible.builtin.fetch:
     src: /tmp/trivy-reports/configauditreports.yaml
-    dest: ../trivy-output/configauditreports.yaml
+    dest: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/trivy-output/configauditreports.yaml"
     flat: true
 
 - name: Fetch RBAC Reports to runner
   ansible.builtin.fetch:
     src: /tmp/trivy-reports/rbacreports.yaml
-    dest: ../trivy-output/rbacreports.yaml
+    dest: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/trivy-output/rbacreports.yaml"
     flat: true

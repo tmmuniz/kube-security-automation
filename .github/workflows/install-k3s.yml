@@ -221,12 +221,22 @@ jobs:
         working-directory: ansible
         run: ansible-playbook playbooks/install-trivy-operator.yml
 
-      - name: Create local directory for Trivy reports
-        run: mkdir -p trivy-output
+      - name: Create local Trivy output directory
+        run: mkdir -p "$GITHUB_WORKSPACE/trivy-output"
 
       - name: Export Trivy reports
         working-directory: ansible
         run: ansible-playbook playbooks/export-trivy-reports.yml
+      
+      - name: Check Runner Directory
+        working-directory: ansible
+        run: ls -la "$GITHUB_WORKSPACE/trivy-output"
+
+      - name: Debug Trivy output files
+        run: |
+          pwd
+          echo "$GITHUB_WORKSPACE"
+          find "$GITHUB_WORKSPACE/trivy-output" -maxdepth 1 -type f -ls
 
       - name: Upload Trivy reports to S3
         env:
@@ -235,14 +245,14 @@ jobs:
         run: |
           set -e
 
-          aws s3 cp trivy-output/vulnerabilityreports.yaml \
+          aws s3 cp "$GITHUB_WORKSPACE/trivy-output/vulnerabilityreports.yaml" \
             "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/vulnerabilityreports.yaml" \
-            --content-type text/plain
+            --content-type application/yaml
 
-          aws s3 cp trivy-output/configauditreports.yaml \
+          aws s3 cp "$GITHUB_WORKSPACE/trivy-output/configauditreports.yaml" \
             "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/configauditreports.yaml" \
-            --content-type text/plain
+            --content-type application/yaml
 
-          aws s3 cp trivy-output/rbacreports.yaml \
+          aws s3 cp "$GITHUB_WORKSPACE/trivy-output/rbacreports.yaml" \
             "s3://${ADM_BUCKET_NAME}/${TRIVY_REPORTS_S3_PREFIX}/rbacreports.yaml" \
-            --content-type text/plain
+            --content-type application/yaml
