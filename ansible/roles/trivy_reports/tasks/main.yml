@@ -1,48 +1,67 @@
 ---
-- name: Create report directory
+- name: Create remote Trivy reports directory
   ansible.builtin.file:
     path: /tmp/trivy-reports
     state: directory
     mode: "0755"
 
-- name: Get VulnerabilityReports
-  ansible.builtin.command: kubectl get vulnerabilityreports -A -o json > /tmp/trivy-reports/vulnerabilityreports.txt
+- name: Get detailed VulnerabilityReports
+  ansible.builtin.command: kubectl get vulnerabilityreports -A -o yaml
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   register: vulnerability_reports_result
   changed_when: false
   failed_when: false
 
-- name: Get ConfigAuditReports
-  ansible.builtin.command: kubectl get configauditreports -A -o json > /tmp/trivy-reports/configauditreports.txt
+- name: Save VulnerabilityReports to remote file
+  ansible.builtin.copy:
+    dest: /tmp/trivy-reports/vulnerabilityreports.yaml
+    content: "{{ vulnerability_reports_result.stdout | default('') }}"
+    mode: "0644"
+
+- name: Get detailed ConfigAuditReports
+  ansible.builtin.command: kubectl get configauditreports -A -o yaml
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   register: configaudit_reports_result
   changed_when: false
   failed_when: false
 
-- name: Get RBAC Assessment Reports
-  ansible.builtin.command: kubectl get rbacassessmentreports -A -o json > /tmp/trivy-reports/rbacreports.txt
+- name: Save ConfigAuditReports to remote file
+  ansible.builtin.copy:
+    dest: /tmp/trivy-reports/configauditreports.yaml
+    content: "{{ configaudit_reports_result.stdout | default('') }}"
+    mode: "0644"
+
+- name: Get detailed RBAC Assessment Reports
+  ansible.builtin.command: kubectl get rbacassessmentreports -A -o yaml
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   register: rbac_reports_result
   changed_when: false
   failed_when: false
 
+
+- name: Save RBAC Assessment Reports to remote file
+  ansible.builtin.copy:
+    dest: /tmp/trivy-reports/rbacreports.yaml
+    content: "{{ rbac_reports_result.stdout | default('') }}"
+    mode: "0644"
+
 - name: Fetch VulnerabilityReports to runner
   ansible.builtin.fetch:
-    src: /tmp/trivy-reports/vulnerabilityreports.txt
-    dest: ../trivy-output/vulnerabilityreports.txt
+    src: /tmp/trivy-reports/vulnerabilityreports.yaml
+    dest: ../trivy-output/vulnerabilityreports.yaml
     flat: true
 
 - name: Fetch ConfigAuditReports to runner
   ansible.builtin.fetch:
-    src: /tmp/trivy-reports/configauditreports.txt
-    dest: ../trivy-output/configauditreports.txt
+    src: /tmp/trivy-reports/configauditreports.yaml
+    dest: ../trivy-output/configauditreports.yaml
     flat: true
 
 - name: Fetch RBAC Reports to runner
   ansible.builtin.fetch:
-    src: /tmp/trivy-reports/rbacreports.txt
-    dest: ../trivy-output/rbacreports.txt
+    src: /tmp/trivy-reports/rbacreports.yaml
+    dest: ../trivy-output/rbacreports.yaml
     flat: true
